@@ -1,14 +1,18 @@
 #include "pcqueue.h"
 #include "stdlib.h"
+#include "stdio.h"
+#include <string.h>
 /* 
  * allocate a new producer-consumer work queue
  * @max_limit - limit on maximum size of the queue
  */
-struct work_queue* alloc_queue(int max_limit)
+struct work_queue* alloc_queue(int max_limit, char* name)
 {
 	struct work_queue* wq = (struct work_queue*)malloc(sizeof(struct work_queue));
 	wq->head = wq->tail = NULL;
 	wq->size = 0;
+	wq->qname = (char*)malloc((sizeof(name)+1)*sizeof(char));
+	strcpy(wq->qname, name);
 	wq->max_size = max_limit;
 	pthread_mutex_init(&wq->queue_lock, NULL);
 	return wq;
@@ -70,6 +74,7 @@ int add_job_to_queue(struct work_queue* wq,void* job)
 		if(try_count > 15) sleep(3); /* Sleep for a while and the queue might get freed-up*/
 		goto TRY_ADDING_TO_QUEUE;		
 		}		
+	printf("PCQUEUE : Added element to %s (size:%d)\n", wq->qname, wq->size);
 	return 0;
 }
 
@@ -91,6 +96,7 @@ void* get_job_from_queue(struct work_queue* wq)
 	else if(wq->head != NULL){
 		wq->head = wq->head->next;
 	}
+	wq->size--;
 	pthread_mutex_unlock(&wq->queue_lock);
 	
 	if(next_job_node != NULL)
@@ -98,6 +104,8 @@ void* get_job_from_queue(struct work_queue* wq)
 		job = next_job_node->data;
 		free(next_job_node);
 		}
+	
+	printf("PCQUEUE : Removed element from %s (size:%d)\n", wq->qname, wq->size);
 
 	return job;
 }

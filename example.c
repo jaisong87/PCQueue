@@ -6,7 +6,7 @@ void push_to_queue(struct work_queue* wq, int i)
 {
 int *data = (int*)malloc(sizeof(int));
 *data = i;
-add_job_to_queue(wq, (void*)data); 
+add_job_to_queue((struct work_queue*)wq, (void*)data); 
 }
 
 int* pop(struct work_queue* wq)
@@ -19,7 +19,7 @@ int main()
 {
 int N=100, i;
 int *data;
-struct work_queue* wq = alloc_queue(1000);
+struct work_queue* wq = alloc_queue(1000, "Num queue");
 
 for(i=0;i<N;i++)
 	{
